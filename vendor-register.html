@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Become a Vendor - VendorHub</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="i18n.js"></script>
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-form-section">
+            <select class="vh-lang-switcher" data-i18n-skip aria-label="Language" onchange="setLanguage(this.value)" style="padding:0.4rem 0.6rem;border-radius:6px;border:1.5px solid var(--gray-200);font-size:0.85rem;font-weight:600;float:right;"><option value="en">English</option><option value="pcm">Pidgin</option><option value="yo">Yorùbá</option><option value="ha">Hausa</option><option value="ig">Igbo</option></select><h2><span data-i18n="become_vendor_title">Become a Vendor</span></h2>
+            <p>Join VendorHub and start selling to local customers</p>
+
+            <form id="registerForm">
+                <div class="grid grid-2" style="gap:1rem;">
+                    <div class="form-group">
+                        <label class="form-label">First Name</label>
+                        <input type="text" class="form-control" id="firstName" required placeholder="John">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" class="form-control" id="lastName" required placeholder="Doe">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-control" id="email" required placeholder="john@example.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    <input type="tel" class="form-control" id="phone" placeholder="08012345678">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" required placeholder="johndoe">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" required placeholder="Min 6 characters">
+                    <div class="form-text">Must be at least 6 characters long</div>
+                </div>
+
+                <div id="alertBox"></div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg" id="submitBtn">Create Vendor Account</button>
+            </form>
+
+            <div class="auth-footer">
+                Already a vendor? <a href="vendor-login.html">Login here</a><br>
+                <a href="index.html" style="color:var(--gray);">← Back to Home</a>
+            </div>
+        </div>
+        <div class="auth-image-section">
+            <h3>Sell on VendorHub</h3>
+            <p>Reach thousands of local customers with zero commission fees. Manage your store, track inventory, and grow your business.</p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://vendorhub-backend-production-200b.up.railway.app/api';
+
+        function showAlert(message, type) {
+            document.getElementById('alertBox').innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading"></span> Creating account...';
+
+            const data = {
+                first_name: document.getElementById('firstName').value,
+                last_name: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                phone_number: document.getElementById('phone').value,
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value,
+                user_type: 'vendor'
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+
+                if (res.ok) {
+                    showAlert('Vendor account created! Redirecting to login...', 'success');
+                    setTimeout(() => window.location.href = 'vendor-login.html', 1500);
+                } else {
+                    showAlert(result.message || 'Registration failed', 'danger');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Create Vendor Account';
+                }
+            } catch (err) {
+                showAlert('Network error. Please try again.', 'danger');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Create Vendor Account';
+            }
+        });
+    </script>
+
+
+</body>
+</html>

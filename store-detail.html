@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store Detail - VendorHub</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="i18n.js"></script>
+    <script src="chat-widget.js"></script>
+    <style>
+        .store-hero {
+            background: linear-gradient(135deg, var(--primary-light) 0%, #ffe8cc 50%, #fff5eb 100%);
+            padding: 3.5rem 2rem;
+            border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+            margin-bottom: 2rem;
+            border-bottom: 3px solid var(--primary);
+        }
+        .store-hero h1 { font-size: 2.2rem; font-weight: 900; color: var(--secondary); margin-bottom: 0.5rem; letter-spacing: -0.5px; }
+        .store-hero p { color: var(--gray-600); max-width: 600px; font-weight: 500; line-height: 1.6; }
+        .store-meta-bar { display: flex; gap: 2rem; margin-top: 1.25rem; font-size: 0.88rem; color: var(--gray-600); font-weight: 600; }
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo" data-i18n-skip>Vendor<span>Hub</span></a>
+            <ul class="nav-links">
+                <li><a href="index.html">🏠 Home</a></li>
+                <li><a href="browse-stores.html">Browse Stores</a></li>
+                <li><a href="vendor-login.html">Vendor Login</a></li>
+                <li><a href="vendor-register.html">Become a Vendor</a></li>
+            </ul>
+            <div class="nav-actions">
+                <select class="vh-lang-switcher" data-i18n-skip aria-label="Language" onchange="setLanguage(this.value)" style="padding:0.4rem 0.6rem;border-radius:6px;border:1.5px solid var(--gray-200);font-size:0.85rem;font-weight:600;"><option value="en">English</option><option value="pcm">Pidgin</option><option value="yo">Yorùbá</option><option value="ha">Hausa</option><option value="ig">Igbo</option></select>
+            </div>
+        </div>
+    </nav>
+
+    <div id="storeHero" class="store-hero" style="display:none;">
+        <div class="container">
+            <span class="badge badge-primary" id="storeCategory">Category</span>
+            <h1 id="storeName">Store Name</h1>
+            <p id="storeDesc">Store description goes here.</p>
+            <div class="store-meta-bar">
+                <span>📍 <span id="storeLocation">Lagos, Nigeria</span></span>
+                <span>📞 <span id="storePhone">Phone</span></span>
+                <span>⭐ 4.5 Rating</span>
+                <span>🕐 <span id="storeHours">Mon-Sat 8AM-6PM</span></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" style="padding:0 1.5rem 3rem;max-width:1400px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+            <h2 style="font-size:1.25rem;font-weight:700;color:var(--secondary);">Products</h2>
+            <button class="btn btn-primary" onclick="toggleCart()">🛒 Cart (<span id="cartCount">0</span>)</button>
+        </div>
+        <div class="products-grid" id="productsGrid">
+            <div class="empty-state" style="grid-column:1/-1;">
+                <p>Loading products...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Sidebar -->
+    <div class="overlay" id="cartOverlay" onclick="toggleCart()"></div>
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h3>Your Cart</h3>
+            <button class="modal-close" onclick="toggleCart()">&times;</button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <p style="text-align:center;color:var(--gray);padding:2rem;">Your cart is empty</p>
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total</span>
+                <span id="cartTotal">₦0</span>
+            </div>
+            <button class="btn btn-primary btn-block" onclick="goToCheckout()">Proceed to Checkout</button>
+        </div>
+    </div>
+
+    <script>
+        if (typeof initChatWidget === "function") initChatWidget();
+        const API_URL = 'https://vendorhub-backend-production-200b.up.railway.app/api';
+        const urlParams = new URLSearchParams(window.location.search);
+        const storeId = urlParams.get('id');
+        let cart = [];
+        let storeData = null;
+
+        if (!storeId) window.location.href = 'browse-stores.html';
+
+        async function loadStore() {
+            try {
+                const res = await fetch(`${API_URL}/stores/${storeId}`);
+                const data = await res.json();
+                if (res.ok) {
+                    storeData = data.store;
+                    document.getElementById('storeHero').style.display = 'block';
+                    document.getElementById('storeName').textContent = data.store.business_name;
+                    document.getElementById('storeDesc').textContent = data.store.description || 'Local store offering quality products';
+                    document.getElementById('storeCategory').textContent = data.store.business_category || 'General';
+                    document.getElementById('storePhone').textContent = data.store.phone_number || 'N/A';
+                    document.getElementById('storeHours').textContent = data.store.operating_hours || 'Mon-Sat 8AM-6PM';
+
+                    const grid = document.getElementById('productsGrid');
+                    if (data.products.length > 0) {
+                        grid.innerHTML = data.products.map(p => {
+                            const imgUrl = p.image_url
+                                ? (p.image_url.startsWith('http') ? p.image_url : p.image_url)
+                                : null;
+                            const imgHtml = imgUrl
+                                ? `<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.parentElement.innerHTML='🛍️';">`
+                                : '🛍️';
+                            return `
+                            <div class="product-card">
+                                <div class="product-image">${imgHtml}</div>
+                                <div class="product-details">
+                                    <h4>${p.name}</h4>
+                                    <div class="price">₦${parseFloat(p.price).toLocaleString()}</div>
+                                    <div class="stock">${p.stock_quantity > 0 ? p.stock_quantity + ' in stock' : '<span style="color:var(--danger);">Out of stock</span>'}</div>
+                                    <button class="btn btn-primary btn-sm btn-block" onclick="addToCart(${p.id}, '${p.name.replace(/'/g, "\\'")}', ${p.price})" ${p.stock_quantity <= 0 ? 'disabled' : ''}>
+                                        ${p.stock_quantity > 0 ? 'Add to Cart' : 'Out of Stock'}
+                                    </button>
+                                </div>
+                            </div>
+                        `}).join('');
+                    } else {
+                        grid.innerHTML = `
+                            <div class="empty-state" style="grid-column:1/-1;">
+                                <div class="empty-state-icon">🛍️</div>
+                                <h3>No products yet</h3>
+                                <p>This store hasn't added any products</p>
+                            </div>
+                        `;
+                    }
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        function addToCart(productId, name, price) {
+            const existing = cart.find(item => item.product_id === productId);
+            if (existing) {
+                existing.quantity++;
+            } else {
+                cart.push({ product_id: productId, name, unit_price: price, quantity: 1 });
+            }
+            updateCartUI();
+        }
+
+        function removeFromCart(productId) {
+            cart = cart.filter(item => item.product_id !== productId);
+            updateCartUI();
+        }
+
+        function updateQty(productId, delta) {
+            const item = cart.find(i => i.product_id === productId);
+            if (item) {
+                item.quantity += delta;
+                if (item.quantity <= 0) removeFromCart(productId);
+                else updateCartUI();
+            }
+        }
+
+        function updateCartUI() {
+            document.getElementById('cartCount').textContent = cart.reduce((sum, i) => sum + i.quantity, 0);
+            const total = cart.reduce((sum, i) => sum + (i.unit_price * i.quantity), 0);
+            document.getElementById('cartTotal').textContent = '₦' + total.toLocaleString();
+
+            const container = document.getElementById('cartItems');
+            if (cart.length > 0) {
+                container.innerHTML = cart.map(item => `
+                    <div class="cart-item">
+                        <div class="cart-item-image">🛍️</div>
+                        <div class="cart-item-details">
+                            <h4>${item.name}</h4>
+                            <div class="price">₦${parseFloat(item.unit_price).toLocaleString()}</div>
+                            <div class="cart-item-qty">
+                                <button class="qty-btn" onclick="updateQty(${item.product_id}, -1)">−</button>
+                                <span>${item.quantity}</span>
+                                <button class="qty-btn" onclick="updateQty(${item.product_id}, 1)">+</button>
+                                <button class="btn btn-danger btn-sm" style="margin-left:auto;" onclick="removeFromCart(${item.product_id})">Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<p style="text-align:center;color:var(--gray);padding:2rem;">Your cart is empty</p>';
+            }
+        }
+
+        function toggleCart() {
+            document.getElementById('cartSidebar').classList.toggle('open');
+            document.getElementById('cartOverlay').classList.toggle('active');
+        }
+
+        function goToCheckout() {
+            if (cart.length === 0) return alert('Your cart is empty');
+            sessionStorage.setItem('vh_cart', JSON.stringify(cart));
+            window.location.href = `guest-checkout.html?store=${storeId}`;
+        }
+
+        loadStore();
+    </script>
+
+
+
+</body>
+</html>

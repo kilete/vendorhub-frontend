@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory - VendorHub</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="i18n.js"></script>
+    <style>
+        .stock-low { color: var(--danger); font-weight: 800; }
+        .stock-ok { color: var(--accent); font-weight: 800; }
+        .change-positive { color: var(--accent); font-weight: 800; }
+        .change-negative { color: var(--danger); font-weight: 800; }
+        .history-reason { font-size: 0.82rem; color: var(--gray-600); font-weight: 500; }
+        .history-date { font-size: 0.78rem; color: var(--gray-400); font-weight: 600; white-space: nowrap; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo" data-i18n-skip>Vendor<span>Hub</span></a>
+            <ul class="nav-links">
+                <li><a href="vendor-dashboard.html">Dashboard</a></li>
+                <li><a href="inventory.html" class="active">Inventory</a></li>
+                <li><a href="vendor-settings.html">Settings</a></li>
+            </ul>
+            <div class="nav-actions"><select class="vh-lang-switcher" data-i18n-skip aria-label="Language" onchange="setLanguage(this.value)" style="padding:0.4rem 0.6rem;border-radius:6px;border:1.5px solid var(--gray-200);font-size:0.85rem;font-weight:600;margin-right:0.5rem;"><option value="en">English</option><option value="pcm">Pidgin</option><option value="yo">Yorùbá</option><option value="ha">Hausa</option><option value="ig">Igbo</option></select>
+                <span id="userName" style="font-weight:600;font-size:0.9rem;"></span>
+                <a href="index.html" class="btn btn-light btn-sm">🏪 Storefront</a>
+                <button class="btn btn-light btn-sm" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div style="display:flex;">
+        <aside class="sidebar">
+            <ul class="sidebar-menu">
+                <li><a href="vendor-dashboard.html">🏠 Dashboard</a></li>
+                <li><a href="vendor-dashboard.html#orders">📦 Orders</a></li>
+                <li><a href="vendor-dashboard.html#products">🛍️ Products</a></li>
+                <li><a href="inventory.html" class="active">📊 Inventory</a></li>
+                <li><a href="vendor-dashboard.html#reports">📈 Reports</a></li>
+                <li><a href="vendor-settings.html">⚙️ Settings</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h1 data-i18n="inventory_management">Inventory Management</h1>
+                <p>Track stock levels and manage inventory</p>
+            </div>
+
+            <div class="grid grid-3" style="margin-bottom:2rem;">
+                <div class="stat-card">
+                    <div class="stat-icon orange">📦</div>
+                    <div class="stat-info">
+                        <h3 id="totalProducts">0</h3>
+                        <p>Total Products</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon red">⚠️</div>
+                    <div class="stat-info">
+                        <h3 id="lowStockCount">0</h3>
+                        <p>Low Stock Items</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">✅</div>
+                    <div class="stat-info">
+                        <h3 id="inStockCount">0</h3>
+                        <p>Well Stocked</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Stock Table -->
+            <div class="card" style="margin-bottom:2rem;">
+                <div class="card-header">
+                    <h3>Current Stock</h3>
+                    <button class="btn btn-primary btn-sm" onclick="openAdjustModal()">📥 Stock Adjustment</button>
+                </div>
+                <div class="table-container">
+                    <table class="table" id="inventoryTable">
+                        <thead>
+                            <tr><th>Product</th><th>Category</th><th>Current Stock</th><th>Status</th><th>Action</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Movement History Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>📜 Stock Movement History</h3>
+                    <span style="font-size:0.8rem;color:var(--gray-500);font-weight:600;">Every restock, order, and adjustment</span>
+                </div>
+                <div class="table-container">
+                    <table class="table" id="historyTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Product</th>
+                                <th>Change</th>
+                                <th>Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Adjust Stock Modal -->
+    <div class="modal" id="adjustModal">
+        <div class="modal-overlay" onclick="closeAdjustModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Adjust Stock</h3>
+                <button class="modal-close" onclick="closeAdjustModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="adjustForm">
+                    <div class="form-group">
+                        <label class="form-label">Product</label>
+                        <select class="form-control" id="adjustProduct" required>
+                            <option value="">Select product...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Quantity Change (+ to add, - to remove)</label>
+                        <input type="number" class="form-control" id="adjustQty" required placeholder="e.g. 10 or -5">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Reason</label>
+                        <input type="text" class="form-control" id="adjustReason" placeholder="Restock, damage, etc.">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-light" onclick="closeAdjustModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveAdjustment()">Save Adjustment</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://vendorhub-backend-production-200b.up.railway.app/api';
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        let inventoryData = [];
+
+        if (!token || user.user_type !== 'vendor') window.location.href = 'vendor-login.html';
+        document.getElementById('userName').textContent = user.first_name || 'Vendor';
+
+        async function loadInventory() {
+            try {
+                const res = await fetch(`${API_URL}/vendor/inventory`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    inventoryData = data;
+                    document.getElementById('totalProducts').textContent = data.length;
+                    const lowStock = data.filter(p => p.stock_quantity <= 5).length;
+                    document.getElementById('lowStockCount').textContent = lowStock;
+                    document.getElementById('inStockCount').textContent = data.length - lowStock;
+
+                    const tbody = document.querySelector('#inventoryTable tbody');
+                    if (data.length > 0) {
+                        tbody.innerHTML = data.map(p => {
+                            const isLow = p.stock_quantity <= 5;
+                            return `
+                                <tr>
+                                    <td><strong>${p.name}</strong></td>
+                                    <td>${p.category || '-'}</td>
+                                    <td class="${isLow ? 'stock-low' : 'stock-ok'}">${p.stock_quantity}</td>
+                                    <td><span class="badge badge-${p.status === 'active' ? 'delivered' : 'cancelled'}">${p.status}</span></td>
+                                    <td><button class="btn btn-primary btn-sm" onclick="quickAdjust(${p.id}, '${p.name.replace(/'/g, "\\'")}')">Adjust</button></td>
+                                </tr>
+                            `;
+                        }).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;">No products in inventory</td></tr>';
+                    }
+
+                    // Populate adjust modal dropdown
+                    const select = document.getElementById('adjustProduct');
+                    select.innerHTML = '<option value="">Select product...</option>' + data.map(p =>
+                        `<option value="${p.id}">${p.name} (Current: ${p.stock_quantity})</option>`
+                    ).join('');
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        async function loadHistory() {
+            try {
+                const res = await fetch(`${API_URL}/vendor/inventory/history`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const history = await res.json();
+                const tbody = document.querySelector('#historyTable tbody');
+
+                if (history.length > 0) {
+                    tbody.innerHTML = history.map(h => {
+                        const isPositive = h.quantity_change > 0;
+                        const sign = isPositive ? '+' : '';
+                        return `
+                            <tr>
+                                <td class="history-date">${new Date(h.created_at).toLocaleString('en-NG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                                <td><strong>${h.product_name}</strong></td>
+                                <td class="${isPositive ? 'change-positive' : 'change-negative'}">${sign}${h.quantity_change}</td>
+                                <td class="history-reason">${h.reason || '-'}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--gray-500);">No movement recorded yet. Orders and adjustments will appear here.</td></tr>';
+                }
+            } catch (err) { console.error('History load error:', err); }
+        }
+
+        function openAdjustModal() {
+            document.getElementById('adjustForm').reset();
+            document.getElementById('adjustModal').classList.add('active');
+        }
+
+        function closeAdjustModal() {
+            document.getElementById('adjustModal').classList.remove('active');
+        }
+
+        function quickAdjust(productId, name) {
+            openAdjustModal();
+            document.getElementById('adjustProduct').value = productId;
+        }
+
+        async function saveAdjustment() {
+            const productId = document.getElementById('adjustProduct').value;
+            const qty = parseInt(document.getElementById('adjustQty').value);
+            const reason = document.getElementById('adjustReason').value;
+
+            if (!productId || isNaN(qty)) {
+                alert('Please select a product and enter a valid quantity');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/vendor/inventory/adjust`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ product_id: productId, quantity_change: qty, reason })
+                });
+                if (res.ok) {
+                    closeAdjustModal();
+                    loadInventory();
+                    loadHistory();
+                } else {
+                    alert('Failed to adjust stock');
+                }
+            } catch (err) {
+                alert('Network error');
+            }
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'vendor-login.html';
+        }
+
+        loadInventory();
+        loadHistory();
+    </script>
+
+
+
+</body>
+</html>

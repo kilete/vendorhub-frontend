@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VendorHub - Connect with Local Vendors in Nigeria</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="i18n.js"></script>
+    <style>
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+        .hero-stat h4 {
+            font-size: 2rem;
+            font-weight: 800;
+        }
+        .hero-stat p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo" data-i18n-skip>Vendor<span>Hub</span></a>
+            <ul class="nav-links">
+                <li><a href="index.html" class="active">Home</a></li>
+                <li><a href="browse-stores.html">Browse Stores</a></li>
+                <li><a href="store-map.html">🗺️ Map</a></li>
+                <li><a href="vendor-register.html">Become a Vendor</a></li>
+                <li><a href="vendor-login.html">Login</a></li>
+            </ul>
+            <div class="nav-actions"><select class="vh-lang-switcher" data-i18n-skip aria-label="Language" onchange="setLanguage(this.value)" style="padding:0.4rem 0.6rem;border-radius:6px;border:1.5px solid var(--gray-200);font-size:0.85rem;font-weight:600;margin-right:0.5rem;"><option value="en">English</option><option value="pcm">Pidgin</option><option value="yo">Yorùbá</option><option value="ha">Hausa</option><option value="ig">Igbo</option></select>
+                <a href="vendor-register.html" class="btn btn-primary">Get Started</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1><span data-i18n="hero_title_1">Order from Local Vendors</span><br><span data-i18n="hero_title_2">No Account Needed</span></h1>
+        <p>VendorHub connects you directly with small businesses in your area. No middlemen, no hidden charges — just great local products at fair prices.</p>
+        <div class="hero-buttons">
+            <a href="browse-stores.html" class="btn btn-lg btn-primary">Browse Stores</a>
+            <a href="vendor-register.html" class="btn btn-lg" style="background: var(--primary-darker); color: white; border: 2px solid var(--primary-darker);">Start Selling</a>
+        </div>
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <h4>500+</h4>
+                <p>Local Vendors</p>
+            </div>
+            <div class="hero-stat">
+                <h4>10k+</h4>
+                <p>Happy Customers</p>
+            </div>
+            <div class="hero-stat">
+                <h4>0%</h4>
+                <p>Commission</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+        <div class="container">
+            <div class="section-title">
+                <h2><span data-i18n="why_choose_us">Why Choose VendorHub?</span></h2>
+                <p>Everything you need to shop local or grow your business</p>
+            </div>
+            <div class="grid grid-3">
+                <div class="feature-card">
+                    <div class="feature-icon">🛒</div>
+                    <h3>Zero Commission</h3>
+                    <p>Vendors keep 100% of their earnings. We don't take a cut from any sale, helping small businesses thrive.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📍</div>
+                    <h3>Local Discovery</h3>
+                    <p>Find hidden gems in your neighborhood. Support local entrepreneurs and build community connections.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Fast Ordering</h3>
+                    <p>Simple, streamlined ordering process. Place orders in seconds and track them in real-time.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📦</div>
+                    <h3>Inventory Management</h3>
+                    <p>Vendors get powerful tools to track stock, manage products, and never miss a sale.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Sales Analytics</h3>
+                    <p>Understand your business with detailed reports on sales, customers, and top products.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Secure & Trusted</h3>
+                    <p>All vendors are verified. Your data is protected with enterprise-grade security.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works">
+        <div class="container">
+            <div class="section-title">
+                <h2><span data-i18n="how_it_works">How It Works</span></h2>
+                <p>Get started in three simple steps</p>
+            </div>
+            <div class="grid grid-3">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h3>Create Account</h3>
+                    <p>Sign up as a customer or vendor in under 2 minutes. No complex setup required.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h3>Browse or List</h3>
+                    <p>Customers browse local stores. Vendors add products and set up their shop.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h3>Order & Grow</h3>
+                    <p>Place orders instantly. Vendors manage sales and grow their business.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2><span data-i18n="ready_to_start">Ready to Get Started?</span></h2>
+            <p>Join thousands of Nigerians shopping and selling locally. It's free to join!</p>
+            <a href="browse-stores.html" class="btn btn-lg btn-light">Browse Stores Near You</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-grid">
+            <div class="footer-section">
+                <h4>VendorHub</h4>
+                <p style="color:#b2bec3;font-size:0.9rem;line-height:1.6;">Empowering small businesses in Nigeria through direct customer connections. No commissions, no hassle.</p>
+            </div>
+            <div class="footer-section">
+                <h4>For Customers</h4>
+                <ul>
+                    <li><a href="browse-stores.html">Browse Stores</a></li>
+                    <li><a href="order-tracking.html">Track My Order</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>For Vendors</h4>
+                <ul>
+                    <li><a href="vendor-register.html">Become a Vendor</a></li>
+                    <li><a href="vendor-login.html">Vendor Login</a></li>
+                    <li><a href="#">Success Stories</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 VendorHub. Built for Nigerian small businesses. All rights reserved.</p>
+        </div>
+    </footer>
+
+
+</body>
+</html>

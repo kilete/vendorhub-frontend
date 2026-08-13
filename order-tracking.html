@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Order - VendorHub</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="i18n.js"></script>
+    <style>
+        .track-page { max-width: 700px; margin: 2rem auto; padding: 0 1.5rem; }
+        .track-card { background: var(--white); border-radius: var(--radius-lg); padding: 2rem; box-shadow: var(--shadow); border: 1.5px solid var(--gray-200); }
+        .track-card h2 { font-size: 1.5rem; font-weight: 900; color: var(--secondary); margin-bottom: 0.25rem; }
+        .order-code { font-family: monospace; font-size: 1.4rem; font-weight: 900; color: var(--primary); letter-spacing: 2px; background: var(--primary-light); padding: 0.5rem 1rem; border-radius: var(--radius); display: inline-block; margin: 0.5rem 0 1rem; }
+        .status-badge-large { font-size: 1rem; padding: 0.5rem 1.25rem; }
+        .vendor-info { background: var(--gray-50); border-radius: var(--radius); padding: 1.25rem; margin: 1.5rem 0; }
+        .vendor-info h4 { font-size: 1rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--secondary); }
+        .vendor-info p { font-size: 0.88rem; color: var(--gray-600); margin-bottom: 0.25rem; }
+        .items-list { margin: 1.5rem 0; }
+        .items-list h4 { font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray-500); margin-bottom: 0.75rem; }
+        .track-item { display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px dashed var(--gray-200); font-size: 0.9rem; }
+        .track-total { display: flex; justify-content: space-between; padding-top: 1rem; margin-top: 0.5rem; border-top: 2px solid var(--gray-200); font-weight: 900; font-size: 1.15rem; color: var(--secondary); }
+        .sms-notice { background: linear-gradient(135deg, var(--accent-light) 0%, #c8e6c9 100%); border-radius: var(--radius); padding: 1rem; margin-bottom: 1.5rem; font-size: 0.88rem; color: #1b5e20; font-weight: 600; }
+        .track-form { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; }
+        .track-form input { flex: 1; }
+
+        /* Chat Styles */
+        .chat-section { margin-top: 2rem; border-top: 2px solid var(--gray-200); padding-top: 1.5rem; }
+        .chat-section h3 { font-size: 1rem; font-weight: 900; color: var(--secondary); margin-bottom: 1rem; }
+        .chat-messages { background: var(--gray-50); border-radius: var(--radius); padding: 1rem; max-height: 300px; overflow-y: auto; margin-bottom: 1rem; }
+        .chat-message { margin-bottom: 0.75rem; }
+        .chat-message .msg-bubble { display: inline-block; padding: 0.6rem 1rem; border-radius: var(--radius-lg); max-width: 80%; font-size: 0.88rem; }
+        .chat-message.customer .msg-bubble { background: var(--primary); color: white; border-bottom-left-radius: 4px; }
+        .chat-message.vendor .msg-bubble { background: var(--white); color: var(--gray-800); border: 1.5px solid var(--gray-200); border-bottom-right-radius: 4px; }
+        .chat-message .msg-meta { font-size: 0.7rem; color: var(--gray-400); margin-top: 0.2rem; font-weight: 600; }
+        .chat-input { display: flex; gap: 0.5rem; }
+        .chat-input input { flex: 1; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo" data-i18n-skip>Vendor<span>Hub</span></a>
+            <ul class="nav-links">
+                <li><a href="index.html">🗺️ <span data-i18n="nav_home">Home</span></a></li>
+                <li><a href="browse-stores.html" data-i18n="nav_browse">Browse Stores</a></li>
+                <li><a href="vendor-login.html" data-i18n="nav_vendor_login">Vendor Login</a></li>
+            </ul>
+            <select class="vh-lang-switcher" data-i18n-skip aria-label="Language" onchange="setLanguage(this.value)" style="padding:0.4rem 0.6rem;border-radius:6px;border:1.5px solid var(--gray-200);font-size:0.85rem;font-weight:600;"><option value="en">English</option><option value="pcm">Pidgin</option><option value="yo">Yorùbá</option><option value="ha">Hausa</option><option value="ig">Igbo</option></select>
+        </div>
+    </nav>
+
+    <div class="track-page">
+        <!-- Lookup Form -->
+        <div class="track-card" id="lookupForm" style="display:none;">
+            <h2>📦 <span data-i18n="track_title">Track Your Order</span></h2>
+            <p style="color:var(--gray-500);margin-bottom:1.5rem;" data-i18n="track_subtitle">Enter your order code, your phone number, or both — whichever you remember</p>
+            <div class="track-form">
+                <input type="text" class="form-control" id="lookupCode" placeholder="Order code (e.g. ABC12345)" data-i18n-placeholder="order_code_placeholder">
+                <input type="tel" class="form-control" id="lookupPhone" placeholder="Phone number" data-i18n-placeholder="phone_placeholder">
+                <button class="btn btn-primary" onclick="trackOrder()" data-i18n="track_btn">Track</button>
+            </div>
+            <div id="phoneLookupResults" style="margin-top:1.5rem;"></div>
+        </div>
+
+        <!-- Order Details -->
+        <div class="track-card" id="orderDetails" style="display:none;">
+            <div id="newOrderBanner"></div>
+            <h2>📦 <span data-i18n="order_status">Order Status</span></h2>
+            <div class="order-code" id="displayCode">---</div>
+            <div>
+                <span class="badge status-badge-large" id="displayStatus">Loading...</span>
+            </div>
+
+            <div class="vendor-info">
+                <h4>🏪 <span id="vendorName">---</span></h4>
+                <p>📍 <span id="vendorAddress">---</span></p>
+                <p>📞 <a href="#" id="vendorPhone">---</a></p>
+            </div>
+
+            <div class="items-list">
+                <h4 data-i18n="items_ordered">Items Ordered</h4>
+                <div id="itemsList"></div>
+                <div class="track-total">
+                    <span data-i18n="total">Total</span>
+                    <span id="displayTotal">₦0</span>
+                </div>
+            </div>
+
+            <div style="background:var(--gray-50);border-radius:var(--radius);padding:1rem;">
+                <p style="font-size:0.85rem;color:var(--gray-600);margin-bottom:0.5rem;"><strong data-i18n="delivery_address_label">Delivery Address:</strong></p>
+                <p style="font-size:0.9rem;color:var(--gray-800);" id="displayAddress">---</p>
+                <p style="font-size:0.85rem;color:var(--gray-500);margin-top:0.5rem;"><strong data-i18n="payment_label">Payment:</strong> <span id="displayPayment">---</span></p>
+            </div>
+
+            <!-- Chat Section -->
+            <div class="chat-section">
+                <h3>💬 <span data-i18n="chat_with_vendor">Chat with Vendor</span></h3>
+                <div class="chat-messages" id="chatMessages">
+                    <p style="text-align:center;color:var(--gray-400);font-size:0.85rem;">Loading messages...</p>
+                </div>
+                <div class="chat-input">
+                    <input type="text" class="form-control" id="chatInput" placeholder="Type a message..." data-i18n-placeholder="type_message" onkeypress="if(event.key==='Enter')sendMessage()">
+                    <button class="btn btn-primary" onclick="sendMessage()" data-i18n="send">Send</button>
+                </div>
+            </div>
+
+            <div style="margin-top:1.5rem;text-align:center;">
+                <a href="index.html" class="btn btn-primary">🏠 <span data-i18n="back_to_home">Back to Home</span></a>
+                <a href="browse-stores.html" class="btn btn-outline">🏪 Browse More Stores</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://vendorhub-backend-production-200b.up.railway.app/api';
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlOrderCode = urlParams.get('code') || '';
+        const urlPhone = urlParams.get('phone') || '';
+        const isNew = urlParams.get('new');
+        const paymentResult = urlParams.get('payment'); // 'success' or 'failed', set after returning from Flutterwave
+
+        if (urlOrderCode) {
+            loadOrder(urlOrderCode, urlPhone);
+        } else {
+            document.getElementById('lookupForm').style.display = 'block';
+        }
+
+        async function loadOrder(code, phone) {
+            try {
+                const res = await fetch(`${API_URL}/orders/track/${code}${phone ? '?phone=' + encodeURIComponent(phone) : ''}`);
+                const data = await res.json();
+
+                if (res.ok) {
+                    document.getElementById('lookupForm').style.display = 'none';
+                    document.getElementById('orderDetails').style.display = 'block';
+
+                    // Set chat context
+                    currentOrderId = data.id || orderIdFromUrl;
+                    currentOrderCode = data.order_code;
+                    currentPhone = data.phone_number;
+                    loadChat();
+
+                    if (isNew) {
+                        document.getElementById('newOrderBanner').innerHTML = `
+                            <div class="sms-notice">
+                                ✅ Order confirmed! An SMS with your tracking link has been sent to ${data.phone_number}.
+                            </div>
+                        `;
+                    }
+
+                    if (paymentResult === 'success') {
+                        document.getElementById('newOrderBanner').innerHTML += `
+                            <div class="sms-notice" style="background:var(--success-light,#d4edda);color:var(--success,#155724);">
+                                💳 Payment received! Your order is now marked as paid.
+                            </div>
+                        `;
+                    } else if (paymentResult === 'failed') {
+                        document.getElementById('newOrderBanner').innerHTML += `
+                            <div class="sms-notice" style="background:#fff3cd;color:#856404;">
+                                ⚠️ Payment was not completed. You can try again or contact the vendor.
+                            </div>
+                        `;
+                    }
+
+                    document.getElementById('displayCode').textContent = data.order_code;
+                    document.getElementById('displayStatus').textContent = data.order_status;
+                    document.getElementById('displayStatus').className = 'badge status-badge-large badge-' + data.order_status;
+                    document.getElementById('vendorName').textContent = data.vendor_name;
+                    document.getElementById('vendorAddress').textContent = data.vendor_address || 'Lagos, Nigeria';
+                    document.getElementById('vendorPhone').textContent = data.vendor_phone || 'N/A';
+                    document.getElementById('vendorPhone').href = 'tel:' + (data.vendor_phone || '');
+                    document.getElementById('displayTotal').textContent = '₦' + parseFloat(data.total_price).toLocaleString();
+                    document.getElementById('displayAddress').textContent = data.delivery_address + (data.delivery_city ? ', ' + data.delivery_city : '');
+                    document.getElementById('displayPayment').textContent = data.payment_method?.replace(/_/g, ' ') || 'Cash on delivery';
+                    document.getElementById('displayPayment').textContent += data.payment_status === 'paid' ? ' — ✅ Paid' : ' — ⏳ Payment pending';
+
+                    const itemsContainer = document.getElementById('itemsList');
+                    if (data.items && data.items.length > 0) {
+                        itemsContainer.innerHTML = data.items.map(item => `
+                            <div class="track-item">
+                                <span>${item.product_name} x${item.quantity}</span>
+                                <span>₦${parseFloat(item.total_price).toLocaleString()}</span>
+                            </div>
+                        `).join('');
+                    }
+                } else {
+                    alert(data.message || 'Order not found');
+                    document.getElementById('lookupForm').style.display = 'block';
+                }
+            } catch (err) {
+                alert('Network error');
+                document.getElementById('lookupForm').style.display = 'block';
+            }
+        }
+
+        async function trackOrder() {
+            const code = document.getElementById('lookupCode').value.trim();
+            const phone = document.getElementById('lookupPhone').value.trim();
+            const resultsBox = document.getElementById('phoneLookupResults');
+            resultsBox.innerHTML = '';
+
+            if (!code && !phone) {
+                alert('Please enter your order code, your phone number, or both');
+                return;
+            }
+
+            // Have a code (with or without phone) — go straight to the full order view.
+            if (code) {
+                window.location.href = `order-tracking.html?code=${code}${phone ? '&phone=' + encodeURIComponent(phone) : ''}`;
+                return;
+            }
+
+            // Only a phone number — forgot the code. Look up every order tied to
+            // that number and let them pick the one they want, same lookup the
+            // chat widget already uses.
+            try {
+                const res = await fetch(`${API_URL}/customer/conversations?phone=${encodeURIComponent(phone)}`);
+                const orders = await res.json();
+                if (!Array.isArray(orders) || orders.length === 0) {
+                    resultsBox.innerHTML = '<p style="color:var(--gray-500);">No orders found for that phone number.</p>';
+                    return;
+                }
+                resultsBox.innerHTML = '<p style="font-weight:600;margin-bottom:0.75rem;">Found ' + orders.length + ' order(s) — tap one:</p>' +
+                    orders.map(o => `
+                        <div class="track-card" style="cursor:pointer;margin-bottom:0.5rem;padding:0.75rem 1rem;" onclick="window.location.href='order-tracking.html?code=${o.order_code}&phone=${encodeURIComponent(phone)}'">
+                            <strong>${o.order_code}</strong> — ${o.business_name}
+                            <span class="badge status-badge-large" style="float:right;">${o.status}</span>
+                        </div>
+                    `).join('');
+            } catch (err) {
+                resultsBox.innerHTML = '<p style="color:var(--danger,#c0392b);">Network error — please try again.</p>';
+            }
+        }
+
+        // Chat functions
+        let currentOrderId = null;
+        let currentOrderCode = '';
+        let currentPhone = '';
+
+        async function loadChat() {
+            if (!currentOrderId) return;
+            try {
+                const res = await fetch(`${API_URL}/messages/${currentOrderId}?order_code=${currentOrderCode}&phone=${encodeURIComponent(currentPhone)}`);
+                const messages = await res.json();
+                const container = document.getElementById('chatMessages');
+                if (messages.length === 0) {
+                    container.innerHTML = '<p style="text-align:center;color:var(--gray-400);font-size:0.85rem;">No messages yet. Start the conversation!</p>';
+                } else {
+                    container.innerHTML = messages.map(m => `
+                        <div class="chat-message ${m.sender_type}">
+                            <div class="msg-bubble">${escapeHtml(m.content)}</div>
+                            <div class="msg-meta">${m.sender_name} · ${new Date(m.created_at).toLocaleTimeString()}</div>
+                        </div>
+                    `).join('');
+                    container.scrollTop = container.scrollHeight;
+                }
+            } catch (err) { console.error('Chat load error:', err); }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const content = input.value.trim();
+            if (!content) return;
+
+            try {
+                const res = await fetch(`${API_URL}/messages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        order_code: currentOrderCode,
+                        phone_number: currentPhone,
+                        content
+                    })
+                });
+                if (res.ok) {
+                    input.value = '';
+                    loadChat();
+                }
+            } catch (err) { console.error('Send message error:', err); }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Poll for new messages every 5 seconds
+        setInterval(() => {
+            if (document.getElementById('orderDetails').style.display !== 'none') {
+                loadChat();
+            }
+        }, 5000);
+    </script>
+
+
+</body>
+</html>

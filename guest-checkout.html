@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - VendorHub</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="i18n.js"></script>
+    <script src="chat-widget.js"></script>
+    <style>
+        .checkout-page { max-width: 600px; margin: 2rem auto; padding: 0 1.5rem; }
+        .checkout-card { background: var(--white); border-radius: var(--radius-lg); padding: 2rem; box-shadow: var(--shadow); border: 1.5px solid var(--gray-200); }
+        .checkout-card h2 { font-size: 1.5rem; font-weight: 900; margin-bottom: 0.5rem; color: var(--secondary); }
+        .checkout-card p.subtitle { color: var(--gray-500); margin-bottom: 1.5rem; font-weight: 500; }
+        .cart-summary { background: var(--gray-50); border-radius: var(--radius); padding: 1rem; margin-bottom: 1.5rem; }
+        .cart-summary h4 { font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray-500); margin-bottom: 0.75rem; }
+        .cart-item-row { display: flex; justify-content: space-between; padding: 0.5rem 0; font-size: 0.9rem; border-bottom: 1px dashed var(--gray-200); }
+        .cart-item-row:last-child { border-bottom: none; }
+        .cart-total-row { display: flex; justify-content: space-between; padding-top: 0.75rem; margin-top: 0.5rem; border-top: 2px solid var(--gray-200); font-weight: 900; font-size: 1.1rem; color: var(--secondary); }
+        .trust-badges { display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem; font-size: 0.8rem; color: var(--gray-400); }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo" data-i18n-skip>Vendor<span>Hub</span></a>
+            <ul class="nav-links">
+                <li><a href="index.html">🏠 <span data-i18n="nav_home">Home</span></a></li>
+                <li><a href="browse-stores.html" data-i18n="nav_browse">Browse Stores</a></li>
+                <li><a href="vendor-login.html" data-i18n="nav_vendor_login">Vendor Login</a></li>
+                <li><a href="vendor-register.html" data-i18n="nav_become_vendor">Become a Vendor</a></li>
+            </ul>
+            <select class="vh-lang-switcher" data-i18n-skip aria-label="Language" onchange="setLanguage(this.value)" style="padding:0.4rem 0.6rem;border-radius:6px;border:1.5px solid var(--gray-200);font-size:0.85rem;font-weight:600;"><option value="en">English</option><option value="pcm">Pidgin</option><option value="yo">Yorùbá</option><option value="ha">Hausa</option><option value="ig">Igbo</option></select>
+        </div>
+    </nav>
+
+    <div class="checkout-page">
+        <div class="checkout-card">
+            <h2>🛒 <span data-i18n="checkout_title">Checkout</span></h2>
+            <p class="subtitle" data-i18n="checkout_subtitle">No account needed. Just your phone &amp; address.</p>
+
+            <div class="cart-summary" id="cartSummary">
+                <h4 data-i18n="your_order">Your Order</h4>
+                <div id="cartItems"></div>
+                <div class="cart-total-row">
+                    <span data-i18n="total">Total</span>
+                    <span id="cartTotal">₦0</span>
+                </div>
+            </div>
+
+            <form id="checkoutForm">
+                <div class="form-group">
+                    <label class="form-label" data-i18n="phone_number">Phone Number</label> <span style="color:var(--danger);">*</span>
+                    <input type="tel" class="form-control" id="phone" required placeholder="08012345678" pattern="[0-9]{11}">
+                    <div class="form-text" data-i18n="phone_help">We'll send your order confirmation &amp; tracking link via SMS</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" data-i18n="delivery_address">Delivery Address</label> <span style="color:var(--danger);">*</span>
+                    <textarea class="form-control" id="address" rows="2" required placeholder="Street, building, landmark..."></textarea>
+                </div>
+                <div class="grid grid-2" style="gap:1rem;">
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="city">City</label>
+                        <input type="text" class="form-control" id="city" value="Lagos">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="postal_code">Postal Code</label>
+                        <input type="text" class="form-control" id="postal" placeholder="100001">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" data-i18n="payment_method">Payment Method</label>
+                    <select class="form-control" id="payment">
+                        <option value="cash_on_delivery">💵 Cash on Delivery</option>
+                        <option value="flutterwave">💳 Pay Now (Card / Bank Transfer via Flutterwave)</option>
+                        <option value="bank_transfer">🏦 Direct Bank Transfer to Vendor</option>
+                    </select>
+                    <div class="form-text" id="paymentHint"></div>
+                </div>
+
+                <div id="vendorBankDetails" style="display:none; background:var(--gray-50); border-radius:var(--radius); padding:1rem; margin-bottom:1rem; font-size:0.9rem;"></div>
+
+
+                <div id="alertBox"></div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg" id="submitBtn">
+                    📲 <span data-i18n="place_order">Place Order &amp; Get Tracking</span>
+                </button>
+            </form>
+
+            <div class="trust-badges">
+                <span>🔒 <span data-i18n="secure">Secure</span></span>
+                <span>📍 <span data-i18n="lagos_only">Lagos Only</span></span>
+                <span>💬 <span data-i18n="sms_tracking">SMS Tracking</span></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        if (typeof initChatWidget === "function") initChatWidget();
+        const API_URL = 'https://vendorhub-backend-production-200b.up.railway.app/api';
+        const urlParams = new URLSearchParams(window.location.search);
+        const storeId = urlParams.get('store');
+
+        // Load cart from sessionStorage
+        let cart = JSON.parse(sessionStorage.getItem('vh_cart') || '[]');
+        if (cart.length === 0 || !storeId) {
+            document.querySelector('.checkout-card').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">🛒</div>
+                    <h3>Your cart is empty</h3>
+                    <p>Browse stores and add items to checkout</p>
+                    <a href="browse-stores.html" class="btn btn-primary">Browse Stores</a>
+                </div>
+            `;
+        } else {
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cartItems');
+            let total = 0;
+            container.innerHTML = cart.map(item => {
+                total += item.unit_price * item.quantity;
+                return `
+                    <div class="cart-item-row">
+                        <span>${item.name} x${item.quantity}</span>
+                        <span>₦${(item.unit_price * item.quantity).toLocaleString()}</span>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('cartTotal').textContent = '₦' + total.toLocaleString();
+        }
+
+        function showAlert(message, type) {
+            document.getElementById('alertBox').innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+        }
+
+        // Show the vendor's own bank details when "Direct Bank Transfer to Vendor" is chosen,
+        // and a short hint for the other two options
+        let vendorBankInfo = null;
+        const paymentSelect = document.getElementById('payment');
+
+        // A vendor can only be paid automatically through Flutterwave once their bank details
+        // are set up and a subaccount exists (flw_subaccount_id). Without one, choosing "Pay Now"
+        // would still take the customer's money, but it settles into the platform's own account
+        // instead of the vendor's — the vendor would then need paying out manually, outside the
+        // platform, with nothing in the order record showing that's required. Rather than let a
+        // customer pick an option that quietly creates that situation, hide it upfront so only
+        // Cash on Delivery and Direct Bank Transfer are offered for that vendor.
+        async function gateFlutterwaveOption() {
+            if (!storeId) return;
+            try {
+                const res = await fetch(`${API_URL}/stores/${storeId}`);
+                const data = await res.json();
+                vendorBankInfo = data.store || null;
+            } catch (err) {
+                console.error(err);
+                return;
+            }
+
+            const flwOption = paymentSelect ? paymentSelect.querySelector('option[value="flutterwave"]') : null;
+            if (flwOption && (!vendorBankInfo || !vendorBankInfo.flw_subaccount_id)) {
+                flwOption.disabled = true;
+                flwOption.textContent = '💳 Pay Now — unavailable for this vendor yet';
+                if (paymentSelect.value === 'flutterwave') {
+                    paymentSelect.value = 'cash_on_delivery';
+                    paymentSelect.dispatchEvent(new Event('change'));
+                }
+            }
+        }
+        gateFlutterwaveOption();
+
+        if (paymentSelect) {
+            paymentSelect.addEventListener('change', async (e) => {
+            const method = e.target.value;
+            const hint = document.getElementById('paymentHint');
+            const bankBox = document.getElementById('vendorBankDetails');
+
+            if (method === 'cash_on_delivery') {
+                hint.textContent = t('hint_cod');
+                bankBox.style.display = 'none';
+            } else if (method === 'flutterwave') {
+                hint.textContent = t('hint_flw');
+                bankBox.style.display = 'none';
+            } else if (method === 'bank_transfer') {
+                hint.textContent = t('hint_bank');
+                if (vendorBankInfo && vendorBankInfo.account_number) {
+                    bankBox.innerHTML = `
+                        <strong>Vendor's Bank Details</strong><br>
+                        Bank: ${vendorBankInfo.bank_name || 'Not provided'}<br>
+                        Account Number: ${vendorBankInfo.account_number}<br>
+                        Account Name: ${vendorBankInfo.account_holder || 'Not provided'}
+                    `;
+                    bankBox.style.display = 'block';
+                } else {
+                    bankBox.innerHTML = `This vendor hasn't added bank details yet. Choose "Pay Now" or "Cash on Delivery" instead.`;
+                    bankBox.style.display = 'block';
+                }
+            }
+            });
+            // Trigger once on load so the hint shows for the default selection
+            paymentSelect.dispatchEvent(new Event('change'));
+        }
+
+        document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Placing order...';
+
+            const items = cart.map(i => ({
+                product_id: i.product_id,
+                quantity: i.quantity,
+                unit_price: i.unit_price
+            }));
+
+            const data = {
+                phone_number: document.getElementById('phone').value,
+                business_id: parseInt(storeId),
+                items,
+                delivery_address: document.getElementById('address').value,
+                delivery_city: document.getElementById('city').value,
+                delivery_postal_code: document.getElementById('postal').value,
+                payment_method: document.getElementById('payment').value
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/orders/guest`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+
+                if (res.ok) {
+                    sessionStorage.removeItem('vh_cart');
+
+                    if (data.payment_method === 'flutterwave') {
+                        // Start the Flutterwave payment and send the customer to pay
+                        try {
+                            const payRes = await fetch(`${API_URL}/payments/initiate`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    order_code: result.order_id,
+                                    phone_number: result.phone_number
+                                })
+                            });
+                            const payData = await payRes.json();
+
+                            if (payRes.ok && payData.payment_link) {
+                                window.location.href = payData.payment_link;
+                                return;
+                            } else {
+                                // Order was placed, but payment couldn't start — still send them to tracking
+                                showAlert(payData.message || 'Order placed, but payment could not be started. You can pay from your tracking page.', 'warning');
+                                setTimeout(() => {
+                                    window.location.href = `order-tracking.html?code=${result.order_id}&phone=${encodeURIComponent(result.phone_number)}&new=1`;
+                                }, 2500);
+                                return;
+                            }
+                        } catch (payErr) {
+                            console.error(payErr);
+                            window.location.href = `order-tracking.html?code=${result.order_id}&phone=${encodeURIComponent(result.phone_number)}&new=1`;
+                            return;
+                        }
+                    }
+
+                    window.location.href = `order-tracking.html?code=${result.order_id}&phone=${encodeURIComponent(result.phone_number)}&new=1`;
+                } else {
+                    showAlert(result.message || 'Order failed', 'danger');
+                    btn.disabled = false;
+                    btn.innerHTML = '📲 Place Order &amp; Get Tracking';
+                }
+            } catch (err) {
+                showAlert('Network error. Please try again.', 'danger');
+                btn.disabled = false;
+                btn.innerHTML = '📲 Place Order &amp; Get Tracking';
+            }
+        });
+    </script>
+
+
+
+</body>
+</html>

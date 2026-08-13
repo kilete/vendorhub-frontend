@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - VendorHub</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="i18n.js"></script>
+    <style>
+        .admin-status-tabs { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1rem; }
+        .admin-status-tabs button.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+        .admin-actions { display:flex; gap:.5rem; flex-wrap:wrap; }
+        .admin-table td { vertical-align:middle; }
+        .admin-muted { color:var(--gray-500); font-size:.85rem; }
+        .admin-error { margin-bottom:1rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo" data-i18n-skip>Vendor<span>Hub</span></a>
+            <ul class="nav-links">
+                <li><a href="admin-dashboard.html" class="active">Admin Dashboard</a></li>
+                <li><a href="browse-stores.html">Browse Stores</a></li>
+            </ul>
+            <div class="nav-actions">
+                <select class="vh-lang-switcher" data-i18n-skip aria-label="Language" onchange="setLanguage(this.value)" style="padding:.4rem .6rem;border-radius:6px;border:1.5px solid var(--gray-200);font-size:.85rem;font-weight:600;margin-right:.5rem;">
+                    <option value="en">English</option>
+                    <option value="pcm">Pidgin</option>
+                    <option value="yo">Yorùbá</option>
+                    <option value="ha">Hausa</option>
+                    <option value="ig">Igbo</option>
+                </select>
+                <span id="adminName" style="font-weight:600;font-size:.9rem;"></span>
+                <button class="btn btn-light btn-sm" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content" style="max-width:1400px;margin:0 auto;">
+        <div class="page-header">
+            <h1>Admin Dashboard</h1>
+            <p>Review vendor applications and approve stores for the public marketplace.</p>
+        </div>
+
+        <div id="adminAlert"></div>
+
+        <div class="grid grid-4" style="margin-bottom:2rem;">
+            <div class="stat-card"><div class="stat-icon orange">🏪</div><div class="stat-info"><h3 id="totalVendors">0</h3><p>Total Vendors</p></div></div>
+            <div class="stat-card"><div class="stat-icon red">⏳</div><div class="stat-info"><h3 id="pendingVendors">0</h3><p>Pending Vendors</p></div></div>
+            <div class="stat-card"><div class="stat-icon green">👥</div><div class="stat-info"><h3 id="totalCustomers">0</h3><p>Total Customers</p></div></div>
+            <div class="stat-card"><div class="stat-icon purple">📦</div><div class="stat-info"><h3 id="totalOrders">0</h3><p>Total Orders</p></div></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h3>Vendor Applications</h3>
+                    <p class="admin-muted" style="margin-top:.25rem;">Approved vendors appear in Browse Stores.</p>
+                </div>
+                <button class="btn btn-outline btn-sm" onclick="loadAdminData()">Refresh</button>
+            </div>
+            <div class="card-body">
+                <div class="admin-status-tabs">
+                    <button class="btn btn-light btn-sm active" data-filter="pending" onclick="setFilter('pending', this)">Pending</button>
+                    <button class="btn btn-light btn-sm" data-filter="approved" onclick="setFilter('approved', this)">Approved</button>
+                    <button class="btn btn-light btn-sm" data-filter="rejected" onclick="setFilter('rejected', this)">Rejected</button>
+                    <button class="btn btn-light btn-sm" data-filter="all" onclick="setFilter('all', this)">All Vendors</button>
+                </div>
+                <div class="table-container">
+                    <table class="table admin-table">
+                        <thead><tr><th>Business</th><th>Owner</th><th>Contact</th><th>Category</th><th>Status</th><th>Action</th></tr></thead>
+                        <tbody id="vendorsTableBody"><tr><td colspan="6" style="text-align:center;padding:2rem;">Loading vendors...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = 'https://vendorhub-backend-production-200b.up.railway.app/api';
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        let vendors = [];
+        let currentFilter = 'pending';
+
+        if (!token || user.user_type !== 'admin') {
+            window.location.href = 'vendor-login.html';
+        }
+
+        document.getElementById('adminName').textContent = user.first_name || user.username || 'Admin';
+
+        function escapeHtml(value) {
+            const div = document.createElement('div');
+            div.textContent = value == null ? '' : String(value);
+            return div.innerHTML;
+        }
+
+        function showAlert(message, type) {
+            document.getElementById('adminAlert').innerHTML = `<div class="alert alert-${type} admin-error">${escapeHtml(message)}</div>`;
+        }
+
+        async function fetchJson(url, options = {}) {
+            const res = await fetch(url, {
+                ...options,
+                headers: { ...(options.headers || {}), 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || 'Request failed');
+            return data;
+        }
+
+        async function loadAdminData() {
+            const tbody = document.getElementById('vendorsTableBody');
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;">Loading vendors...</td></tr>';
+            try {
+                const [stats, vendorList] = await Promise.all([
+                    fetchJson(`${API_URL}/admin/dashboard`),
+                    fetchJson(`${API_URL}/admin/vendors`)
+                ]);
+                document.getElementById('totalVendors').textContent = stats.total_vendors || 0;
+                document.getElementById('pendingVendors').textContent = stats.pending_vendors || 0;
+                document.getElementById('totalCustomers').textContent = stats.total_customers || 0;
+                document.getElementById('totalOrders').textContent = stats.total_orders || 0;
+                vendors = vendorList || [];
+                renderVendors();
+            } catch (error) {
+                console.error('Admin load error:', error);
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;">${escapeHtml(error.message)}</td></tr>`;
+                showAlert(error.message, 'danger');
+                if (/token|permission|access/i.test(error.message)) setTimeout(() => logout(), 1200);
+            }
+        }
+
+        function setFilter(filter, button) {
+            currentFilter = filter;
+            document.querySelectorAll('.admin-status-tabs button').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            renderVendors();
+        }
+
+        function renderVendors() {
+            const tbody = document.getElementById('vendorsTableBody');
+            const visible = currentFilter === 'all' ? vendors : vendors.filter(v => v.status === currentFilter);
+            if (!visible.length) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;">No ${currentFilter === 'all' ? '' : currentFilter} vendor applications found.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = visible.map(v => `
+                <tr>
+                    <td><strong>${escapeHtml(v.business_name || 'Unnamed business')}</strong><br><span class="admin-muted">${escapeHtml(v.business_address || 'No address provided')}</span></td>
+                    <td>${escapeHtml(`${v.first_name || ''} ${v.last_name || ''}`.trim() || 'Unknown')}</td>
+                    <td>${escapeHtml(v.email || '')}<br><span class="admin-muted">${escapeHtml(v.phone_number || 'No phone')}</span></td>
+                    <td>${escapeHtml(v.business_category || 'General')}</td>
+                    <td><span class="badge badge-${escapeHtml(v.status || 'pending')}">${escapeHtml(v.status || 'pending')}</span></td>
+                    <td><div class="admin-actions">
+                        ${v.status !== 'approved' ? `<button class="btn btn-success btn-sm" onclick="changeVendorStatus(${Number(v.id)}, 'approve')">Approve</button>` : ''}
+                        ${v.status !== 'rejected' ? `<button class="btn btn-danger btn-sm" onclick="changeVendorStatus(${Number(v.id)}, 'reject')">Reject</button>` : ''}
+                    </div></td>
+                </tr>
+            `).join('');
+        }
+
+        async function changeVendorStatus(id, action) {
+            const verb = action === 'approve' ? 'approve' : 'reject';
+            if (!confirm(`Are you sure you want to ${verb} this vendor?`)) return;
+            try {
+                const result = await fetchJson(`${API_URL}/admin/vendors/${id}/${action}`, { method: 'POST' });
+                showAlert(result.message || `Vendor ${verb}d successfully`, 'success');
+                await loadAdminData();
+            } catch (error) {
+                showAlert(error.message, 'danger');
+            }
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'vendor-login.html';
+        }
+
+        loadAdminData();
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Login - VendorHub</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="i18n.js"></script>
+    <style>
+        .demo-box {
+            background: linear-gradient(135deg, var(--primary-light) 0%, #ffe8cc 100%);
+            border-radius: var(--radius);
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.82rem;
+            border: 1.5px solid rgba(246, 139, 30, 0.15);
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+        .demo-box strong { color: var(--primary-darker); font-weight: 800; }
+    </style>
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-form-section">
+            <select class="vh-lang-switcher" data-i18n-skip aria-label="Language" onchange="setLanguage(this.value)" style="padding:0.4rem 0.6rem;border-radius:6px;border:1.5px solid var(--gray-200);font-size:0.85rem;font-weight:600;float:right;"><option value="en">English</option><option value="pcm">Pidgin</option><option value="yo">Yorùbá</option><option value="ha">Hausa</option><option value="ig">Igbo</option></select><h2><span data-i18n="vendor_login_title">Vendor Login</span></h2>
+            <p>Access your store dashboard and manage orders</p>
+
+            <div class="demo-box">
+                <strong>Admin:</strong> admin@platform.com / admin123<br>
+                <span style="color:var(--gray);">Register as vendor to create new accounts</span>
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-control" id="email" required placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" required placeholder="Enter your password">
+                </div>
+
+                <div id="alertBox"></div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg" id="submitBtn">Login</button>
+            </form>
+
+            <div class="auth-footer">
+                Don't have a vendor account? <a href="vendor-register.html">Register here</a><br>
+                <a href="index.html" style="color:var(--gray);">← Back to Home</a>
+            </div>
+        </div>
+        <div class="auth-image-section">
+            <h3>Vendor Portal</h3>
+            <p>Manage your products, track inventory, process orders, and grow your business with VendorHub's vendor tools.</p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://vendorhub-backend-production-200b.up.railway.app/api';
+
+        function showAlert(message, type) {
+            document.getElementById('alertBox').innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading"></span> Logging in...';
+
+            const data = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+
+                if (res.ok) {
+                    localStorage.setItem('token', result.token);
+                    localStorage.setItem('user', JSON.stringify(result.user));
+                    showAlert('Login successful! Redirecting...', 'success');
+                    setTimeout(() => {
+                        if (result.user.user_type === 'vendor') window.location.href = 'vendor-dashboard.html';
+                        else if (result.user.user_type === 'admin') window.location.href = 'admin-dashboard.html';
+                    }, 1000);
+                } else {
+                    showAlert(result.message || 'Login failed', 'danger');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Login';
+                }
+            } catch (err) {
+                showAlert('Network error. Please try again.', 'danger');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Login';
+            }
+        });
+    </script>
+
+
+</body>
+</html>

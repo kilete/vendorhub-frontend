@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Settings - VendorHub</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="i18n.js"></script>
+    <style>
+        .img-uploader {
+            border: 1.5px dashed var(--gray-200, #ddd);
+            border-radius: var(--radius, 12px);
+            padding: 1rem;
+            text-align: center;
+            background: var(--gray-50, #fafafa);
+        }
+        .img-preview {
+            display: none;
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 0 auto 0.75rem;
+            object-fit: cover;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        #bannerPreview { max-height: 150px; }
+        #logoPreview { max-height: 96px; max-width: 180px; }
+        .img-uploader-empty {
+            color: var(--gray-500, #888);
+            font-size: 0.85rem;
+            margin-bottom: 0.75rem;
+        }
+        .img-uploader-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .mt-2 { margin-top: 0.6rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo" data-i18n-skip>Vendor<span>Hub</span></a>
+            <ul class="nav-links">
+                <li><a href="vendor-dashboard.html">Dashboard</a></li>
+                <li><a href="inventory.html">Inventory</a></li>
+                <li><a href="vendor-settings.html" class="active">Settings</a></li>
+            </ul>
+            <div class="nav-actions"><select class="vh-lang-switcher" data-i18n-skip aria-label="Language" onchange="setLanguage(this.value)" style="padding:0.4rem 0.6rem;border-radius:6px;border:1.5px solid var(--gray-200);font-size:0.85rem;font-weight:600;margin-right:0.5rem;"><option value="en">English</option><option value="pcm">Pidgin</option><option value="yo">Yorùbá</option><option value="ha">Hausa</option><option value="ig">Igbo</option></select>
+                <span id="userName" style="font-weight:600;font-size:0.9rem;"></span>
+                <a href="index.html" class="btn btn-light btn-sm">🏪 Storefront</a>
+                <button class="btn btn-light btn-sm" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div style="display:flex;">
+        <aside class="sidebar">
+            <ul class="sidebar-menu">
+                <li><a href="vendor-dashboard.html">🏠 Dashboard</a></li>
+                <li><a href="vendor-dashboard.html#orders">📦 Orders</a></li>
+                <li><a href="vendor-dashboard.html#products">🛍️ Products</a></li>
+                <li><a href="inventory.html">📊 Inventory</a></li>
+                <li><a href="vendor-dashboard.html#reports">📈 Reports</a></li>
+                <li><a href="vendor-settings.html" class="active">⚙️ Settings</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h1 data-i18n="business_settings">Business Settings</h1>
+                <p>Manage your store profile and business information</p>
+            </div>
+
+            <div id="alertBox"></div>
+
+            <!-- Business Info -->
+            <div class="settings-section">
+                <h3>🏪 Business Information</h3>
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label class="form-label">Business Name</label>
+                        <input type="text" class="form-control" id="bizName" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Business Category</label>
+                        <select class="form-control" id="bizCategory">
+                            <option>Groceries</option>
+                            <option>Bakery</option>
+                            <option>Electronics</option>
+                            <option>Fashion</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Business Description</label>
+                    <textarea class="form-control" id="bizDesc" rows="3" placeholder="Describe your business..."></textarea>
+                </div>
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label class="form-label">Business Phone</label>
+                        <input type="tel" class="form-control" id="bizPhone">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Business Email *</label>
+                        <input type="email" class="form-control" id="bizEmail" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Business Address</label>
+                    <textarea class="form-control" id="bizAddress" rows="2"></textarea>
+                </div>
+            </div>
+
+            <!-- Location -->
+            <div class="settings-section">
+                <h3>📍 Location & Hours</h3>
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label class="form-label">Operating Hours</label>
+                        <input type="text" class="form-control" id="operatingHours" placeholder="Mon-Sat 8AM-6PM">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Latitude</label>
+                        <input type="text" class="form-control" id="latitude" placeholder="6.5244">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Longitude</label>
+                        <input type="text" class="form-control" id="longitude" placeholder="3.3792">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bank Details -->
+            <div class="settings-section">
+                <h3>🏦 Bank Details (For Payouts)</h3>
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label class="form-label">Bank Name</label>
+                        <select class="form-control" id="bankName">
+                            <option value="">Loading banks...</option>
+                        </select>
+                        <div class="form-text">Needed so Flutterwave can pay you automatically for card/transfer orders</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Account Number</label>
+                        <input type="text" class="form-control" id="accountNumber">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Account Holder Name</label>
+                        <input type="text" class="form-control" id="accountHolder">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Store Appearance -->
+            <div class="settings-section">
+                <h3>🎨 Store Appearance</h3>
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label class="form-label">Store Banner</label>
+                        <div class="img-uploader" id="bannerUploader">
+                            <img class="img-preview" id="bannerPreview" alt="Store Banner">
+                            <div class="img-uploader-empty" id="bannerEmpty">No banner yet</div>
+                            <div class="img-uploader-actions">
+                                <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('bannerGallery').click()">🖼️ Gallery</button>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('bannerCamera').click()">📷 Camera</button>
+                                <button type="button" class="btn btn-light btn-sm" onclick="clearImage('banner')">✕ Remove</button>
+                            </div>
+                            <input type="file" id="bannerGallery" accept="image/*" hidden>
+                            <input type="file" id="bannerCamera" accept="image/*" capture="environment" hidden>
+                            <input type="text" class="form-control mt-2" id="bannerUrl" placeholder="Or paste image URL">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Store Logo</label>
+                        <div class="img-uploader" id="logoUploader">
+                            <img class="img-preview" id="logoPreview" alt="Store Logo">
+                            <div class="img-uploader-empty" id="logoEmpty">No logo yet</div>
+                            <div class="img-uploader-actions">
+                                <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('logoGallery').click()">🖼️ Gallery</button>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('logoCamera').click()">📷 Camera</button>
+                                <button type="button" class="btn btn-light btn-sm" onclick="clearImage('logo')">✕ Remove</button>
+                            </div>
+                            <input type="file" id="logoGallery" accept="image/*" hidden>
+                            <input type="file" id="logoCamera" accept="image/*" capture="environment" hidden>
+                            <input type="text" class="form-control mt-2" id="logoUrl" placeholder="Or paste image URL">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display:flex;gap:1rem;margin-bottom:3rem;">
+                <button class="btn btn-primary btn-lg" onclick="saveProfile()">💾 Save Changes</button>
+                <button class="btn btn-danger btn-lg" onclick="deleteAccount()">🗑️ Close Store</button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const API_URL = 'https://vendorhub-backend-production-200b.up.railway.app/api';
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        // Holds the (uploaded or pasted) URL for banner / logo
+        let bannerUrl = '';
+        let logoUrl = '';
+
+        if (!token || user.user_type !== 'vendor') window.location.href = 'vendor-login.html';
+        document.getElementById('userName').textContent = user.first_name || 'Vendor';
+
+        async function loadBankList(selectedCode) {
+            try {
+                const res = await fetch(`${API_URL}/banks`);
+                const data = await res.json();
+                const select = document.getElementById('bankName');
+                if (res.ok && data.banks) {
+                    select.innerHTML = '<option value="">Select your bank</option>' +
+                        data.banks.map(b => `<option value="${b.code}" data-name="${b.name}" ${b.code === selectedCode ? 'selected' : ''}>${b.name}</option>`).join('');
+                } else {
+                    select.innerHTML = '<option value="">Could not load banks — try again</option>';
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('bankName').innerHTML = '<option value="">Could not load banks — try again</option>';
+            }
+        }
+
+        async function loadProfile() {
+            try {
+                const res = await fetch(`${API_URL}/vendor/profile`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (res.ok && data.business) {
+                    const b = data.business;
+                    document.getElementById('bizName').value = b.business_name || '';
+                    document.getElementById('bizCategory').value = b.business_category || 'Other';
+                    document.getElementById('bizDesc').value = b.description || '';
+                    document.getElementById('bizPhone').value = b.business_phone || '';
+                    document.getElementById('bizEmail').value = b.business_email || '';
+                    document.getElementById('bizAddress').value = b.business_address || '';
+                    document.getElementById('operatingHours').value = b.operating_hours || '';
+                    document.getElementById('latitude').value = b.latitude || '';
+                    document.getElementById('longitude').value = b.longitude || '';
+                    await loadBankList(b.bank_code || '');
+                    document.getElementById('accountNumber').value = b.account_number || '';
+                    document.getElementById('accountHolder').value = b.account_holder || '';
+                    bannerUrl = b.store_banner || '';
+                    logoUrl = b.store_logo || '';
+                    setImage('banner', bannerUrl);
+                    setImage('logo', logoUrl);
+                } else {
+                    await loadBankList('');
+                }
+            } catch (err) { console.error(err); await loadBankList(''); }
+        }
+
+        function showAlert(message, type) {
+            document.getElementById('alertBox').innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+        }
+
+        async function saveProfile() {
+            const bizEmailEl = document.getElementById('bizEmail');
+            if (!bizEmailEl.value.trim() || !bizEmailEl.checkValidity()) {
+                showAlert('Business Email is required — Flutterwave needs it to set up automatic payouts to your bank account.', 'danger');
+                bizEmailEl.focus();
+                return;
+            }
+
+            const bankSelect = document.getElementById('bankName');
+            const selectedOption = bankSelect.options[bankSelect.selectedIndex];
+
+            const data = {
+                business_name: document.getElementById('bizName').value,
+                business_category: document.getElementById('bizCategory').value,
+                description: document.getElementById('bizDesc').value,
+                business_phone: document.getElementById('bizPhone').value,
+                business_email: document.getElementById('bizEmail').value,
+                business_address: document.getElementById('bizAddress').value,
+                operating_hours: document.getElementById('operatingHours').value,
+                latitude: document.getElementById('latitude').value,
+                longitude: document.getElementById('longitude').value,
+                bank_code: bankSelect.value,
+                bank_name: selectedOption ? (selectedOption.dataset.name || '') : '',
+                account_number: document.getElementById('accountNumber').value,
+                account_holder: document.getElementById('accountHolder').value,
+                store_banner: bannerUrl,
+                store_logo: logoUrl
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/vendor/profile`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if (res.ok) {
+                    if (result.warning) {
+                        showAlert(result.warning, 'warning');
+                    } else {
+                        showAlert('Business profile updated successfully! Flutterwave payouts are set up for your bank account.', 'success');
+                    }
+                } else {
+                    showAlert(result.message || 'Failed to update profile', 'danger');
+                }
+            } catch (err) {
+                showAlert('Network error', 'danger');
+            }
+        }
+
+        function deleteAccount() {
+            if (confirm('Are you sure you want to close your store? This action requires admin approval.')) {
+                alert('Store closure request submitted.');
+            }
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'vendor-login.html';
+        }
+
+        // ============ Banner / Logo image upload (gallery or camera) ============
+        function setupImageUpload(prefix) {
+            const gallery = document.getElementById(prefix + 'Gallery');
+            const camera = document.getElementById(prefix + 'Camera');
+            if (gallery) gallery.addEventListener('change', e => {
+                if (e.target.files && e.target.files[0]) pickImage(prefix, e.target.files[0]);
+                e.target.value = '';
+            });
+            if (camera) camera.addEventListener('change', e => {
+                if (e.target.files && e.target.files[0]) pickImage(prefix, e.target.files[0]);
+                e.target.value = '';
+            });
+            const urlInput = document.getElementById(prefix + 'Url');
+            if (urlInput) urlInput.addEventListener('input', e => {
+                const v = e.target.value.trim();
+                if (prefix === 'banner') bannerUrl = v; else logoUrl = v;
+                if (!v) clearImage(prefix, true);
+            });
+        }
+
+        async function pickImage(prefix, file) {
+            if (!file.type || !file.type.startsWith('image/')) {
+                showAlert('Please choose an image file.', 'danger');
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                showAlert('Image must be 5MB or smaller.', 'danger');
+                return;
+            }
+            setImage(prefix, URL.createObjectURL(file), true); // instant local preview
+            try {
+                const url = await uploadImage(file);
+                setImage(prefix, url);
+            } catch (err) {
+                // Backend upload unavailable (e.g. no Cloudinary) — fall back to a
+                // local data URL so the image still saves and displays.
+                try {
+                    const dataUrl = await fileToDataUrl(file);
+                    setImage(prefix, dataUrl);
+                } catch (e2) {
+                    showAlert('Could not upload image.', 'danger');
+                }
+            }
+        }
+
+        async function uploadImage(file) {
+            const fd = new FormData();
+            fd.append('image', file);
+            const res = await fetch(`${API_URL}/vendor/upload`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: fd
+            });
+            if (!res.ok) throw new Error('upload failed');
+            const data = await res.json();
+            if (!data.url) throw new Error('no url');
+            return data.url;
+        }
+
+        function fileToDataUrl(file) {
+            return new Promise((resolve, reject) => {
+                const r = new FileReader();
+                r.onload = () => resolve(r.result);
+                r.onerror = reject;
+                r.readAsDataURL(file);
+            });
+        }
+
+        function setImage(prefix, url, isObjectUrl) {
+            if (prefix === 'banner') bannerUrl = url; else logoUrl = url;
+            const img = document.getElementById(prefix + 'Preview');
+            const empty = document.getElementById(prefix + 'Empty');
+            if (url) {
+                img.src = url;
+                img.style.display = 'block';
+                if (empty) empty.style.display = 'none';
+            } else {
+                img.removeAttribute('src');
+                img.style.display = 'none';
+                if (empty) empty.style.display = 'block';
+            }
+            // keep the paste-URL box in sync, but don't fight the user while typing
+            const urlInput = document.getElementById(prefix + 'Url');
+            if (urlInput && document.activeElement !== urlInput) urlInput.value = isObjectUrl ? '' : (url || '');
+        }
+
+        function clearImage(prefix, fromInput) {
+            if (prefix === 'banner') bannerUrl = ''; else logoUrl = '';
+            const img = document.getElementById(prefix + 'Preview');
+            const empty = document.getElementById(prefix + 'Empty');
+            if (img) { img.removeAttribute('src'); img.style.display = 'none'; }
+            if (empty) empty.style.display = 'block';
+            if (!fromInput) {
+                const urlInput = document.getElementById(prefix + 'Url');
+                if (urlInput) urlInput.value = '';
+            }
+        }
+
+        setupImageUpload('banner');
+        setupImageUpload('logo');
+        loadProfile();
+    </script>
+
+
+
+</body>
+</html>

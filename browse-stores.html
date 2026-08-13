@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Stores - VendorHub</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="i18n.js"></script>
+    <script src="chat-widget.js"></script>
+    <style>
+        .browse-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .results-header h2 { font-size: 1.25rem; font-weight: 700; }
+        @media (max-width: 768px) {
+            .browse-layout { grid-template-columns: 1fr; }
+            .filter-sidebar { position: relative; top: 0; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo" data-i18n-skip>Vendor<span>Hub</span></a>
+            <ul class="nav-links">
+                <li><a href="index.html">🗺️ Home</a></li>
+                <li><a href="browse-stores.html" class="active">Browse Stores</a></li>
+                <li><a href="vendor-login.html">Vendor Login</a></li>
+                <li><a href="vendor-register.html">Become a Vendor</a></li>
+            </ul>
+            <div class="nav-actions"><select class="vh-lang-switcher" data-i18n-skip aria-label="Language" onchange="setLanguage(this.value)" style="padding:0.4rem 0.6rem;border-radius:6px;border:1.5px solid var(--gray-200);font-size:0.85rem;font-weight:600;margin-right:0.5rem;"><option value="en">English</option><option value="pcm">Pidgin</option><option value="yo">Yorùbá</option><option value="ha">Hausa</option><option value="ig">Igbo</option></select>
+                <a href="index.html" class="btn btn-primary">Get Started</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="browse-layout">
+        <!-- Filters -->
+        <aside class="filter-sidebar">
+            <h3 style="margin-bottom:1.25rem;font-size:1.1rem;">Filters</h3>
+            <div class="filter-group">
+                <h4>Search</h4>
+                <input type="text" class="form-control" id="searchInput" placeholder="Store name...">
+            </div>
+            <div class="filter-group">
+                <h4>Category</h4>
+                <div class="filter-options">
+                    <label><input type="radio" name="category" value="all" checked onchange="loadStores()"> All Categories</label>
+                    <label><input type="radio" name="category" value="Groceries" onchange="loadStores()"> Groceries</label>
+                    <label><input type="radio" name="category" value="Bakery" onchange="loadStores()"> Bakery</label>
+                    <label><input type="radio" name="category" value="Electronics" onchange="loadStores()"> Electronics</label>
+                    <label><input type="radio" name="category" value="Fashion" onchange="loadStores()"> Fashion</label>
+                </div>
+            </div>
+            <button class="btn btn-primary btn-block" onclick="loadStores()">Apply Filters</button>
+        </aside>
+
+        <!-- Results -->
+        <div>
+            <div class="results-header">
+                <h2><span data-i18n="stores_near_you">Stores Near You</span></h2>
+                <select class="form-control" id="sortSelect" style="width:180px;" onchange="loadStores()">
+                    <option value="relevance">Sort by Relevance</option>
+                    <option value="newest">Newest First</option>
+                    <option value="rating">Highest Rated</option>
+                </select>
+            </div>
+            <div class="grid grid-3" id="storesGrid">
+                <div class="empty-state" style="grid-column:1/-1;">
+                    <div class="empty-state-icon">🏪</div>
+                    <p>Loading stores...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        if (typeof initChatWidget === "function") initChatWidget();
+        const API_URL = 'https://vendorhub-backend-production-200b.up.railway.app/api';
+
+        async function loadStores() {
+            const search = document.getElementById('searchInput').value;
+            const category = document.querySelector('input[name="category"]:checked').value;
+            const sort = document.getElementById('sortSelect').value;
+
+            try {
+                const res = await fetch(`${API_URL}/customer/stores?search=${search}&category=${category}&sort=${sort}`);
+                const stores = await res.json();
+                const grid = document.getElementById('storesGrid');
+
+                if (stores.length > 0) {
+                    grid.innerHTML = stores.map(s => `
+                        <div class="store-card">
+                            <div class="store-banner">🏪</div>
+                            <div class="store-info">
+                                <span class="category">${s.business_category || 'General Store'}</span>
+                                <h3>${s.business_name}</h3>
+                                <p>${s.description || 'Quality products from a trusted local vendor.'}</p>
+                                <div class="store-meta">
+                                    <span>📍 ${s.latitude ? 'Nearby' : 'Lagos'}</span>
+                                    <span>⭐ 4.5</span>
+                                </div>
+                                <div class="store-meta" style="margin-top:0.5rem;">
+                                    <span>🛍️ ${Number(s.product_count || 0).toLocaleString()} Products</span>
+                                    <span>📦 ${Number(s.total_stock || 0).toLocaleString()} in stock</span>
+                                </div>
+                                <a href="store-detail.html?id=${s.id}" class="btn btn-primary btn-sm btn-block" style="margin-top:1rem;">Browse Store</a>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    grid.innerHTML = `
+                        <div class="empty-state" style="grid-column:1/-1;">
+                            <div class="empty-state-icon">🔍</div>
+                            <h3>No stores found</h3>
+                            <p>Try adjusting your filters or search terms</p>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                console.error('Load stores error:', err);
+            }
+        }
+
+        // Load from URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlSearch = urlParams.get('search');
+        if (urlSearch) {
+            document.getElementById('searchInput').value = urlSearch;
+        }
+        loadStores();
+    </script>
+
+
+</body>
+</html>
