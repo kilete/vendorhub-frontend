@@ -44,7 +44,34 @@
                 <div id="alertBox"></div>
 
                 <button type="submit" class="btn btn-primary btn-block btn-lg" id="submitBtn">Login</button>
+                <p style="text-align:center;margin-top:0.75rem;"><a href="#" onclick="showForgotPassword();return false;" style="color:var(--gray-500);font-size:0.9rem;">Forgot password?</a></p>
             </form>
+
+            <div id="forgotStep1" style="display:none;">
+                <p style="color:var(--gray-500);margin-bottom:1rem;">Enter the phone number on your vendor account. If it matches, we'll send a 6-digit reset code to it by SMS.</p>
+                <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    <input type="tel" class="form-control" id="resetPhone" placeholder="Phone number used at registration">
+                </div>
+                <div id="forgotAlertBox"></div>
+                <button type="button" class="btn btn-primary btn-block btn-lg" onclick="requestResetCode()" id="requestCodeBtn">Send Reset Code</button>
+                <p style="text-align:center;margin-top:0.75rem;"><a href="#" onclick="backToLogin();return false;" style="color:var(--gray-500);font-size:0.9rem;">← Back to login</a></p>
+            </div>
+
+            <div id="forgotStep2" style="display:none;">
+                <p style="color:var(--gray-500);margin-bottom:1rem;">Enter the 6-digit code you were sent, and your new password.</p>
+                <div class="form-group">
+                    <label class="form-label">Reset Code</label>
+                    <input type="text" class="form-control" id="resetCode" placeholder="6-digit code" maxlength="6">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">New Password</label>
+                    <input type="password" class="form-control" id="newPassword" placeholder="At least 6 characters">
+                </div>
+                <div id="resetAlertBox"></div>
+                <button type="button" class="btn btn-primary btn-block btn-lg" onclick="submitNewPassword()" id="resetBtn">Reset Password</button>
+                <p style="text-align:center;margin-top:0.75rem;"><a href="#" onclick="backToLogin();return false;" style="color:var(--gray-500);font-size:0.9rem;">← Back to login</a></p>
+            </div>
 
             <div class="auth-footer">
                 Don't have a vendor account? <a href="vendor-register.html">Register here</a><br>
@@ -62,6 +89,81 @@
 
         function showAlert(message, type) {
             document.getElementById('alertBox').innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+        }
+
+        function showForgotPassword() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('forgotStep1').style.display = 'block';
+            document.getElementById('forgotStep2').style.display = 'none';
+        }
+
+        function backToLogin() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('forgotStep1').style.display = 'none';
+            document.getElementById('forgotStep2').style.display = 'none';
+        }
+
+        let resetPhoneNumber = '';
+
+        async function requestResetCode() {
+            const phone = document.getElementById('resetPhone').value.trim();
+            const box = document.getElementById('forgotAlertBox');
+            const btn = document.getElementById('requestCodeBtn');
+            if (!phone) {
+                box.innerHTML = '<div class="alert alert-danger">Enter your phone number</div>';
+                return;
+            }
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Sending...';
+            try {
+                const res = await fetch(`${API_URL}/auth/forgot-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone_number: phone })
+                });
+                const result = await res.json();
+                resetPhoneNumber = phone;
+                box.innerHTML = `<div class="alert alert-success">${result.message}</div>`;
+                document.getElementById('forgotStep1').style.display = 'none';
+                document.getElementById('forgotStep2').style.display = 'block';
+            } catch (err) {
+                box.innerHTML = '<div class="alert alert-danger">Network error. Please try again.</div>';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Send Reset Code';
+            }
+        }
+
+        async function submitNewPassword() {
+            const code = document.getElementById('resetCode').value.trim();
+            const newPassword = document.getElementById('newPassword').value;
+            const box = document.getElementById('resetAlertBox');
+            const btn = document.getElementById('resetBtn');
+            if (!code || !newPassword) {
+                box.innerHTML = '<div class="alert alert-danger">Enter the code and your new password</div>';
+                return;
+            }
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Resetting...';
+            try {
+                const res = await fetch(`${API_URL}/auth/reset-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone_number: resetPhoneNumber, code, newPassword })
+                });
+                const result = await res.json();
+                if (res.ok) {
+                    box.innerHTML = `<div class="alert alert-success">${result.message}</div>`;
+                    setTimeout(backToLogin, 2000);
+                } else {
+                    box.innerHTML = `<div class="alert alert-danger">${result.message}</div>`;
+                }
+            } catch (err) {
+                box.innerHTML = '<div class="alert alert-danger">Network error. Please try again.</div>';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Reset Password';
+            }
         }
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
