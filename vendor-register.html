@@ -38,7 +38,10 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Password</label>
-                    <input type="password" class="form-control" id="password" required placeholder="Min 6 characters">
+                    <div style="position:relative;">
+                        <input type="password" class="form-control" id="password" required placeholder="Min 6 characters" style="padding-right:44px;">
+                        <button type="button" onclick="togglePasswordField('password', this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1.1rem;line-height:1;padding:4px;" aria-label="Show password">👁️</button>
+                    </div>
                     <div class="form-text">Must be at least 6 characters long</div>
                 </div>
 
@@ -59,10 +62,18 @@
     </div>
 
     <script>
-        const API_URL = 'https://vendorhub-backend-production-200b.up.railway.app/api';
+        const API_URL = 'https://vendorhub-backend-production.up.railway.app/api';
 
         function showAlert(message, type) {
             document.getElementById('alertBox').innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+        }
+
+        function togglePasswordField(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const showing = input.type === 'text';
+            input.type = showing ? 'password' : 'text';
+            btn.textContent = showing ? '👁️' : '🙈';
+            btn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
         }
 
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
