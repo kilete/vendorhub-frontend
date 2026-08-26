@@ -1238,3 +1238,17 @@
   };
 
 })(typeof window !== "undefined" ? window : this);
+
+/* ---------------- mobile nav toggle ---------------- */
+function toggleMobileNav() {
+  var nav = document.querySelector(".nav-links");
+  if (nav) nav.classList.toggle("mobile-open");
+}
+document.addEventListener("click", function (e) {
+  var nav = document.querySelector(".nav-links");
+  var btn = document.querySelector(".mobile-menu-btn");
+  if (!nav || !nav.classList.contains("mobile-open")) return;
+  if (nav.contains(e.target) || (btn && btn.contains(e.target))) return;
+  nav.classList.remove("mobile-open");
+});
+

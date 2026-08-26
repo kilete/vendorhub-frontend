@@ -41,10 +41,12 @@
         <div class="nav-container">
             <a href="index.html" class="logo" data-i18n-skip>Vendor<span>Hub</span></a>
             <ul class="nav-links">
-                <li><a href="index.html">🗺️ <span data-i18n="nav_home">Home</span></a></li>
+                <li><a href="index.html">🏠 <span data-i18n="nav_home">Home</span></a></li>
                 <li><a href="browse-stores.html" data-i18n="nav_browse">Browse Stores</a></li>
+                <li><a href="store-map.html">🗺️ Map</a></li>
                 <li><a href="vendor-login.html" data-i18n="nav_vendor_login">Vendor Login</a></li>
             </ul>
+            <button class="mobile-menu-btn" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
             <select class="vh-lang-switcher" data-i18n-skip aria-label="Language" onchange="setLanguage(this.value)" style="padding:0.4rem 0.6rem;border-radius:6px;border:1.5px solid var(--gray-200);font-size:0.85rem;font-weight:600;"><option value="en">English</option><option value="pcm">Pidgin</option><option value="yo">Yorùbá</option><option value="ha">Hausa</option><option value="ig">Igbo</option></select>
         </div>
     </nav>

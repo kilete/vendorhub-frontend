@@ -2016,7 +2016,33 @@ input:checked + .slider:before {
     .footer-grid { grid-template-columns: 1fr; }
     .settings-grid { grid-template-columns: 1fr; }
     .cart-sidebar { width: 100%; }
-    .nav-links { display: none; }
+    .navbar { position: relative; }
+    .nav-links {
+        display: none;
+        position: absolute;
+        top: 68px;
+        left: 0;
+        right: 0;
+        background: var(--white);
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+        padding: 1rem 2rem 1.5rem;
+        border-bottom: 1.5px solid var(--gray-200);
+        box-shadow: var(--shadow-md);
+        z-index: 999;
+    }
+    .nav-links.mobile-open {
+        display: flex;
+    }
+    .nav-links li {
+        width: 100%;
+    }
+    .nav-links li a {
+        display: block;
+        width: 100%;
+        padding: 0.65rem 0;
+    }
 }
 
 @media (max-width: 480px) {
