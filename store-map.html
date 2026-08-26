@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Store Map - VendorHub</title>
+    <title>Store Map - Bricks4Bills</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <script src="i18n.js"></script>
@@ -323,13 +323,15 @@
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
-            <a href="index.html" class="logo" data-i18n-skip>Vendor<span>Hub</span></a>
+            <a href="index.html" class="logo" data-i18n-skip><span class="logo-bricks">Bricks</span><span class="logo-four">4</span><span class="logo-bills">Bills</span></a>
             <ul class="nav-links">
-                <li><a href="index.html" class="active">🗺️ <span data-i18n="nav_home">Home</span></a></li>
+                <li><a href="index.html">🏠 <span data-i18n="nav_home">Home</span></a></li>
                 <li><a href="browse-stores.html" data-i18n="nav_browse">Browse Stores</a></li>
+                <li><a href="store-map.html" class="active">🗺️ Map</a></li>
                 <li><a href="vendor-login.html" data-i18n="nav_vendor_login">Vendor Login</a></li>
                 <li><a href="vendor-register.html" data-i18n="nav_become_vendor">Become a Vendor</a></li>
             </ul>
+            <button class="mobile-menu-btn" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
             <div class="nav-actions">
                 <select class="vh-lang-switcher" data-i18n-skip aria-label="Language" onchange="setLanguage(this.value)" style="padding:0.4rem 0.6rem;border-radius:6px;border:1.5px solid var(--gray-200);font-size:0.85rem;font-weight:600;margin-right:0.75rem;"><option value="en">English</option><option value="pcm">Pidgin</option><option value="yo">Yorùbá</option><option value="ha">Hausa</option><option value="ig">Igbo</option></select>
                 <a href="index.html" class="btn btn-primary" data-i18n="nav_get_started">Get Started</a>
@@ -342,7 +344,7 @@
         <aside class="map-sidebar" id="mapSidebar">
             <div class="map-sidebar-header">
                 <div style="background:linear-gradient(135deg,var(--primary-light) 0%,#ffe8cc 100%);border-radius:var(--radius);padding:1rem;margin-bottom:1rem;border:1.5px solid rgba(246,139,30,0.15);">
-                    <h3 style="font-size:1rem;font-weight:900;color:var(--secondary);margin-bottom:0.35rem;">👋 <span data-i18n="welcome_title">Welcome to VendorHub</span></h3>
+                    <h3 style="font-size:1rem;font-weight:900;color:var(--secondary);margin-bottom:0.35rem;">👋 <span data-i18n="welcome_title">Welcome to Bricks4Bills</span></h3>
                     <p style="font-size:0.82rem;color:var(--gray-600);font-weight:500;line-height:1.5;" data-i18n="welcome_text">No login needed. Browse stores on the map, add items to cart, and checkout with just your phone number.</p>
                 </div>
                 <h2>🗺️ <span data-i18n="nearby_stores">Nearby Stores</span></h2>
@@ -376,7 +378,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
     <script>
         if (typeof initChatWidget === "function") initChatWidget();
-        const API_URL = 'https://vendorhub-backend-production.up.railway.app/api';
+        const API_URL = 'https://bricks4bills-production.up.railway.app/api';
         const token = localStorage.getItem('token');
         const user = JSON.parse(localStorage.getItem('user') || '{}');
 
